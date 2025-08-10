@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NecordModule } from 'necord';
-import { IntentsBitField } from 'discord.js';
+import { GatewayIntentBits, Partials } from 'discord.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ReactionModule } from './reaction/reaction.module';
 
@@ -18,7 +18,12 @@ import { ReactionModule } from './reaction/reaction.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         token: config.get<string>('DISCORD_TOKEN', ''),
-        intents: [IntentsBitField.Flags.Guilds],
+        intents: [
+          GatewayIntentBits.Guilds,
+          GatewayIntentBits.GuildMessages,
+          GatewayIntentBits.GuildMessageReactions,
+        ],
+        partials: [Partials.Message, Partials.Reaction, Partials.User],
         development: [config.get<string>('DISCORD_DEVELOPMENT_GUILD_ID', '')],
       }),
     }),
