@@ -15,13 +15,15 @@ export class ReactionService {
       try {
         await reaction.fetch();
       } catch (error) {
-        this.logger.error('Failed to fetch the reaction', error);
+        this.logger.error('Failed to fetch a reaction.', error);
         return;
       }
     }
 
     // ユーザーがボットの場合は無視
     if (user.bot) return;
+
+    // -------- 1. 特定のチャンネルでメッセージに特定の絵文字(A)がつけられたことを検知する -------- //
 
     // 検出するチャンネルと絵文字を指定
     const targetChannelId = '1402771854384435352';
@@ -36,5 +38,21 @@ export class ReactionService {
     this.logger.log(
       `${user.username} reacted to the message(ID: ${reaction.message.id}) with ${emoji}.`,
     );
+
+    // -------- 2. そのメッセージからA以外すべての絵文字を消去する -------- //
+    // const reactions = (await reaction.message.fetch()).reactions.cache;
+    const reactions = reaction.message.reactions.cache;
+    const removalPromises: Promise<MessageReaction>[] = [];
+
+    for (const [, reaction] of reactions) {
+      if (reaction.emoji.name === targetEmoji) continue;
+      removalPromises.push(reaction.remove());
+    }
+    try {
+      await Promise.all(removalPromises);
+      this.logger.log('Successfully removed reactions');
+    } catch (error) {
+      this.logger.error('Failed to remove reactions.', error);
+    }
   }
 }
