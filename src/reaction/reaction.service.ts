@@ -40,17 +40,14 @@ export class ReactionService {
     );
 
     // -------- 2. そのメッセージからA以外すべての絵文字を消去する -------- //
-    // const reactions = (await reaction.message.fetch()).reactions.cache;
     const reactions = reaction.message.reactions.cache;
-    const removalPromises: Promise<MessageReaction>[] = [];
 
-    for (const [, reaction] of reactions) {
-      if (reaction.emoji.name === targetEmoji) continue;
-      removalPromises.push(reaction.remove());
-    }
     try {
-      await Promise.all(removalPromises);
-      this.logger.log('Successfully removed reactions');
+      for (const [, reaction] of reactions) {
+        if (reaction.emoji.name === targetEmoji) continue;
+        await reaction.remove();
+      }
+      this.logger.log('Successfully removed reactions.');
     } catch (error) {
       this.logger.error('Failed to remove reactions.', error);
     }
@@ -59,13 +56,14 @@ export class ReactionService {
     const emojisToAdd = [0x26be, 0x26bd, 0x1f3c0].map((code) =>
       String.fromCodePoint(code),
     ); // 絵文字たち(B)
-    for (const emoji of emojisToAdd) {
-      try {
+
+    try {
+      for (const emoji of emojisToAdd) {
         await reaction.message.react(emoji);
-        this.logger.log(`Successfully added reaction ${emoji}`);
-      } catch (error) {
-        this.logger.error(`Failed to add reaction ${emoji}:`, error);
       }
+      this.logger.log('Successfully added reactions.');
+    } catch (error) {
+      this.logger.error('Failed to add reactions.', error);
     }
   }
 }
