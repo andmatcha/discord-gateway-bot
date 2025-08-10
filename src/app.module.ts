@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NecordModule } from 'necord';
 import { IntentsBitField } from 'discord.js';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ReactionModule } from './reaction/reaction.module';
 
 @Module({
@@ -13,10 +13,14 @@ import { ReactionModule } from './reaction/reaction.module';
       envFilePath: ['.env.development.local'],
       cache: true,
     }),
-    NecordModule.forRoot({
-      token: process.env.DISCORD_TOKEN ?? '',
-      intents: [IntentsBitField.Flags.Guilds],
-      development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID ?? ''],
+    NecordModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        token: config.get<string>('DISCORD_TOKEN', ''),
+        intents: [IntentsBitField.Flags.Guilds],
+        development: [config.get<string>('DISCORD_DEVELOPMENT_GUILD_ID', '')],
+      }),
     }),
     ReactionModule,
   ],
