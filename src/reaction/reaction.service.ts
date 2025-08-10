@@ -27,7 +27,7 @@ export class ReactionService {
 
     // 検出するチャンネルと絵文字を指定
     const targetChannelId = '1402771854384435352';
-    const targetEmoji = '👍';
+    const targetEmoji = String.fromCodePoint(0x1f44d); // 絵文字(A)
 
     // チャンネルと絵文字のチェック
     if (reaction.message.channelId !== targetChannelId) return;
@@ -40,19 +40,30 @@ export class ReactionService {
     );
 
     // -------- 2. そのメッセージからA以外すべての絵文字を消去する -------- //
-    // const reactions = (await reaction.message.fetch()).reactions.cache;
     const reactions = reaction.message.reactions.cache;
-    const removalPromises: Promise<MessageReaction>[] = [];
 
-    for (const [, reaction] of reactions) {
-      if (reaction.emoji.name === targetEmoji) continue;
-      removalPromises.push(reaction.remove());
-    }
     try {
-      await Promise.all(removalPromises);
-      this.logger.log('Successfully removed reactions');
+      for (const [, reaction] of reactions) {
+        if (reaction.emoji.name === targetEmoji) continue;
+        await reaction.remove();
+      }
+      this.logger.log('Successfully removed reactions.');
     } catch (error) {
       this.logger.error('Failed to remove reactions.', error);
+    }
+
+    // -------- 3. そのメッセージに指定した絵文字たち(B)をbotを使って付与する -------- //
+    const emojisToAdd = [0x26be, 0x26bd, 0x1f3c0].map((code) =>
+      String.fromCodePoint(code),
+    ); // 絵文字たち(B)
+
+    try {
+      for (const emoji of emojisToAdd) {
+        await reaction.message.react(emoji);
+      }
+      this.logger.log('Successfully added reactions.');
+    } catch (error) {
+      this.logger.error('Failed to add reactions.', error);
     }
   }
 }
